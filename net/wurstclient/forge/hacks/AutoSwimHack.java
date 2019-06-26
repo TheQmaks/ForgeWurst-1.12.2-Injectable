@@ -31,7 +31,7 @@ public final class AutoSwimHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 	}
 	
 	@Override

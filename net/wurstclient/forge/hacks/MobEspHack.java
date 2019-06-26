@@ -52,7 +52,7 @@ public final class MobEspHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 		
 		mobBox = GL11.glGenLists(1);
 		GL11.glNewList(mobBox, GL11.GL_COMPILE);

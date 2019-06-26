@@ -106,7 +106,7 @@ public final class TunnellerHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 		
 		for(int i = 0; i < displayLists.length; i++)
 			displayLists[i] = GL11.glGenLists(1);

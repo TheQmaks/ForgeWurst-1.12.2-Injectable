@@ -11,18 +11,16 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.wurstclient.forge.events.*;
 import net.wurstclient.forge.events.WUpdateEvent;
 
-@Mod.EventBusSubscriber
-public final class WEventFactory
+public class WEventFactory
 {
 	@SubscribeEvent
-	public static void onPlayerPreTick(TickEvent.PlayerTickEvent event)
+	public void onPlayerPreTick(TickEvent.PlayerTickEvent event)
 	{
 		if(event.phase != Phase.START)
 			return;
@@ -38,7 +36,7 @@ public final class WEventFactory
 	}
 
 	@SubscribeEvent
-	public static void onClientSentMessage(ClientChatEvent event)
+	public void onClientSentMessage(ClientChatEvent event)
 	{
 		WChatOutputEvent event2 =
 				new WChatOutputEvent(event.getOriginalMessage());

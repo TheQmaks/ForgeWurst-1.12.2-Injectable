@@ -56,7 +56,7 @@ public final class PlayerEspHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 		
 		playerBox = GL11.glGenLists(1);
 		GL11.glNewList(playerBox, GL11.GL_COMPILE);

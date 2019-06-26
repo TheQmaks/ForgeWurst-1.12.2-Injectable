@@ -26,7 +26,7 @@ public final class FastPlaceHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 	}
 	
 	@Override

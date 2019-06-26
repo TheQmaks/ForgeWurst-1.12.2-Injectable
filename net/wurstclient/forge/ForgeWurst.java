@@ -8,18 +8,29 @@
 package net.wurstclient.forge;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.EventBus;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.wurstclient.forge.clickgui.ClickGui;
+import net.wurstclient.forge.compatibility.WEventFactory;
 
 //@Mod(modid = ForgeWurst.MODID)
 public final class ForgeWurst
@@ -42,6 +53,8 @@ public final class ForgeWurst
 	private IngameHUD hud;
 	private CommandProcessor cmdProcessor;
 	private KeybindProcessor keybindProcessor;
+
+	private Method register;
 	
 //	@EventHandler
 //	public void init(FMLInitializationEvent event)
@@ -55,6 +68,13 @@ public final class ForgeWurst
 	}
 
 	public void init() {
+		try {
+			register = EventBus.class.getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
+			register.setAccessible(true);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+
 		String mcClassName = Minecraft.class.getName().replace(".", "/");
 		FMLDeobfuscatingRemapper remapper = FMLDeobfuscatingRemapper.INSTANCE;
 		obfuscated = !mcClassName.equals(remapper.unmap(mcClassName));
@@ -83,15 +103,17 @@ public final class ForgeWurst
 		gui.init(hax);
 
 		hud = new IngameHUD(hax, gui);
-		MinecraftForge.EVENT_BUS.register(hud);
+		register(hud);
 
 		cmdProcessor = new CommandProcessor(cmds);
-		MinecraftForge.EVENT_BUS.register(cmdProcessor);
+		register(cmdProcessor);
 
 		keybindProcessor = new KeybindProcessor(hax, keybinds, cmdProcessor);
-		MinecraftForge.EVENT_BUS.register(keybindProcessor);
+		register(keybindProcessor);
 
-		MinecraftForge.EVENT_BUS.register(keybindProcessor);
+		register(keybindProcessor);
+
+		register(new WEventFactory());
 	}
 
 	public static ForgeWurst getForgeWurst()
@@ -122,5 +144,57 @@ public final class ForgeWurst
 	public ClickGui getGui()
 	{
 		return gui;
+	}
+
+	public void register(Object target) {
+		boolean isStatic = target.getClass() == Class.class;
+		@SuppressWarnings("unchecked")
+		Set<? extends Class<?>> supers = isStatic ? Sets.newHashSet((Class<?>)target) : TypeToken.of(target.getClass()).getTypes().rawTypes();
+		for (Method method : (isStatic ? (Class<?>)target : target.getClass()).getMethods())
+		{
+			if (isStatic && !Modifier.isStatic(method.getModifiers()))
+				continue;
+			else if (!isStatic && Modifier.isStatic(method.getModifiers()))
+				continue;
+
+			for (Class<?> cls : supers)
+			{
+				try
+				{
+					Method real = cls.getDeclaredMethod(method.getName(), method.getParameterTypes());
+					if (real.isAnnotationPresent(SubscribeEvent.class))
+					{
+						Class<?>[] parameterTypes = method.getParameterTypes();
+						if (parameterTypes.length != 1)
+						{
+							throw new IllegalArgumentException(
+									"Method " + method + " has @SubscribeEvent annotation, but requires " + parameterTypes.length +
+											" arguments.  Event handler methods must require a single argument."
+							);
+						}
+
+						Class<?> eventType = parameterTypes[0];
+
+						if (!Event.class.isAssignableFrom(eventType))
+						{
+							throw new IllegalArgumentException("Method " + method + " has @SubscribeEvent annotation, but takes a argument that is not an Event " + eventType);
+						}
+
+						try {
+							register.invoke(MinecraftForge.EVENT_BUS, eventType, target, real, Loader.instance().getMinecraftModContainer());
+						} catch (IllegalAccessException e) {
+							e.printStackTrace();
+						} catch (InvocationTargetException e) {
+							e.printStackTrace();
+						}
+						break;
+					}
+				}
+				catch (NoSuchMethodException e)
+				{
+					; // Eat the error, this is not unexpected
+				}
+			}
+		}
 	}
 }

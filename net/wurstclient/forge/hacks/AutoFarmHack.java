@@ -93,7 +93,7 @@ public final class AutoFarmHack extends Hack
 		GL11.glEnd();
 		GL11.glEndList();
 		
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 	}
 	
 	@Override

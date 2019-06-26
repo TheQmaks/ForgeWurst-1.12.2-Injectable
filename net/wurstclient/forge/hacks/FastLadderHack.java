@@ -25,7 +25,7 @@ public final class FastLadderHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 	}
 	
 	@Override

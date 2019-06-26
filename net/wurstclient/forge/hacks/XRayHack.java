@@ -9,6 +9,7 @@ package net.wurstclient.forge.hacks;
 
 import java.lang.reflect.Field;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.init.Blocks;
 import net.wurstclient.forge.Category;
@@ -27,12 +28,17 @@ public final class XRayHack extends Hack {
 
         try {
             BlockRendererDispatcher renderer = Minecraft.getMinecraft().getBlockRendererDispatcher();
+            if(renderer.getClass().getName().equals("codechicken.lib.render.block.CCBlockRendererDispatcher")) {
+                Field parentDispatcher = renderer.getClass().getDeclaredField("parentDispatcher");
+                parentDispatcher.setAccessible(true);
+                renderer = (BlockRendererDispatcher) parentDispatcher.get(renderer);
+            }
             Field blockModelRenderer = renderer.getClass().getDeclaredField(ForgeWurst.getForgeWurst().isObfuscated() ? "field_175027_c" : "blockModelRenderer");
             blockModelRenderer.setAccessible(true);
             blockModelRenderer.set(renderer, new WForgeBlockModelRenderer(mc.getBlockColors()));
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
         } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
     }

@@ -63,7 +63,7 @@ public final class ChestEspHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 		AxisAlignedBB bb = new AxisAlignedBB(BlockPos.ORIGIN);
 		
 		greenBox = GL11.glGenLists(1);

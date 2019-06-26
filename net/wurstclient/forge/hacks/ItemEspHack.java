@@ -53,7 +53,7 @@ public final class ItemEspHack extends Hack
 	@Override
 	protected void onEnable()
 	{
-		MinecraftForge.EVENT_BUS.register(this);
+		wurst.register(this);
 		
 		itemBox = GL11.glGenLists(1);
 		GL11.glNewList(itemBox, GL11.GL_COMPILE);
